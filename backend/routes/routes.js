@@ -21,7 +21,9 @@ router.post('/api/register', registerUser);
 router.post('/api/employees', upload.single('f_Image'), createEmployee);
 router.get('/api/employees', getAllEmployees);
 router.get('/api/employees/:id', getEmployeeById);
-router.put('/api/employees/:id', updateEmployee);
+router.post('/api/employeesupdate', updateEmployee);
 router.delete('/api/employees/:id', deleteEmployee);
+
+
 
 module.exports = router;

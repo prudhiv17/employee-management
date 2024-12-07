@@ -103,9 +103,9 @@ const createEmployee = async (req, res) => {
         f_Mobile: req.body.f_Mobile,
         f_Designation: req.body.f_Designation,
         f_gender: req.body.f_gender,
-        f_Course: req.body.f_Course,  // Ensure it's an array
-        f_Id: req.body.f_Id,          // Make sure f_Id is provided or auto-generated
-        f_Image: req.body.f_Image     // Validated image path
+        f_Course: req.body.f_Course,  
+        f_Id: req.body.f_Id,         
+        f_Image: req.body.f_Image   
       });
   
       await newEmployee.save();
@@ -143,7 +143,6 @@ const getEmployeeById = async (req, res) => {
     }
 };
 
-// Update Employee
 const updateEmployee = async (req, res) => {
     try {
         const { errors, isValid } = validateEmployeeInput(req.body);
@@ -152,7 +151,41 @@ const updateEmployee = async (req, res) => {
             return res.status(400).json(errors);
         }
 
-        const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Create a new object with the updated fields
+        const updatedEmployeeData = {
+            f_Name: req.body.f_Name,
+            f_Email: req.body.f_Email,
+            f_Mobile: req.body.f_Mobile,
+            f_Designation: req.body.f_Designation,
+            f_gender: req.body.f_gender,
+            f_Course: req.body.f_Course,
+            f_Id: req.body.f_Id,
+            f_Image: req.body.f_Image
+        };
+
+        console.log(updatedEmployeeData)
+
+        // If f_Course is a stringified array, parse it
+        if (typeof updatedEmployeeData.f_Course === 'string') {
+            updatedEmployeeData.f_Course = JSON.parse(updatedEmployeeData.f_Course);
+        }
+
+        // Check if f_Name has at least 2 characters
+        if (updatedEmployeeData.f_Name && updatedEmployeeData.f_Name.length < 2) {
+            return res.status(400).json({ message: 'Name must be at least 2 characters' });
+        }
+
+        // Check if f_Image is valid (jpg/png)
+        if (updatedEmployeeData.f_Image && !updatedEmployeeData.f_Image.match(/\.(jpg|png)$/)) {
+            return res.status(400).json({ message: 'Image must be jpg or png' });
+        }
+
+        // Use f_Id for querying the employee
+        const employee = await Employee.findOneAndUpdate(
+            { f_Id: req.params.id }, // Match based on f_Id in the database
+            updatedEmployeeData
+        );
+
         if (!employee) {
             return res.status(404).json({ message: 'Employee not found' });
         }
@@ -162,25 +195,31 @@ const updateEmployee = async (req, res) => {
             employee
         });
     } catch (error) {
+        console.log(req.body)
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
+
 // Delete Employee
 const deleteEmployee = async (req, res) => {
     try {
-        console.log(req.params)
-        const empId = req.params.id;
-        console.log(empId)
-        const employee = await Employee.findByIdAndDelete(empId);
+        const empId = req.params.id; // Get f_Id from the URL parameters
+        console.log(empId);
+
+        // Find and delete the employee by f_Id
+        const employee = await Employee.findOneAndDelete({ f_Id: empId });
+
         if (!employee) {
             return res.status(404).json({ message: 'Employee not found' });
         }
+
         res.status(200).json({ message: 'Employee deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 module.exports = {
     createEmployee,
